@@ -50,7 +50,7 @@
 ```
 
 **[→ View the full case study (HTML)](./nuc-bios-recovery-portfolio.html)**
-
+https://arturskaufmanis.github.io/BIOS-recovery/
 ---
 
 ## 🖼️ Evidence Gallery
