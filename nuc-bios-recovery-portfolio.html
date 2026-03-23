@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Case Study: NUC7i5BNH BIOS Recovery | Arturs – IT Portfolio</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #0a0c0f;
+    --surface:   #0f1318;
+    --panel:     #131920;
+    --border:    #1e2d3d;
+    --accent:    #00c8ff;
+    --accent2:   #00ff9d;
+    --warn:      #ff6b35;
+    --muted:     #4a6070;
+    --text:      #c8d8e4;
+    --text-dim:  #7a9ab0;
+    --mono:      'Share Tech Mono', monospace;
+    --head:      'Rajdhani', sans-serif;
+    --body:      'DM Sans', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--body);
+    font-size: 15px;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* Scanline overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,200,255,0.015) 2px,
+      rgba(0,200,255,0.015) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* ── HEADER ── */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    background: rgba(10,12,15,0.95);
+    backdrop-filter: blur(8px);
+    z-index: 100;
+  }
+
+  .logo {
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+  }
+
+  .logo span { color: var(--text-dim); }
+
+  nav a {
+    font-family: var(--head);
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    text-decoration: none;
+    margin-left: 2rem;
+    transition: color 0.2s;
+  }
+  nav a:hover { color: var(--accent); }
+
+  /* ── HERO ── */
+  .hero {
+    padding: 5rem 2rem 3.5rem;
+    max-width: 900px;
+    margin: 0 auto;
+    animation: fadeUp 0.7s ease both;
+  }
+
+  .tag-row {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+  }
+
+  .tag {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    padding: 0.25rem 0.75rem;
+    border-radius: 2px;
+    border: 1px solid;
+  }
+  .tag-blue  { border-color: var(--accent);  color: var(--accent);  background: rgba(0,200,255,0.07); }
+  .tag-green { border-color: var(--accent2); color: var(--accent2); background: rgba(0,255,157,0.07); }
+  .tag-warn  { border-color: var(--warn);    color: var(--warn);    background: rgba(255,107,53,0.07); }
+
+  h1 {
+    font-family: var(--head);
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 700;
+    line-height: 1.1;
+    color: #fff;
+    margin-bottom: 1.2rem;
+    letter-spacing: -0.01em;
+  }
+
+  h1 em {
+    font-style: normal;
+    color: var(--accent);
+  }
+
+  .hero-sub {
+    font-size: 1.05rem;
+    color: var(--text-dim);
+    max-width: 650px;
+    margin-bottom: 2.5rem;
+  }
+
+  /* Metadata bar */
+  .meta-bar {
+    display: flex;
+    gap: 2.5rem;
+    flex-wrap: wrap;
+    padding: 1rem 1.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 2px;
+  }
+
+  .meta-item label {
+    display: block;
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 0.2rem;
+  }
+
+  .meta-item value {
+    display: block;
+    font-family: var(--head);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  /* ── MAIN CONTENT ── */
+  main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 2rem 5rem;
+  }
+
+  /* Section titles */
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 3.5rem 0 1.5rem;
+  }
+
+  .section-num {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+  }
+
+  h2 {
+    font-family: var(--head);
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.02em;
+  }
+
+  .section-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  p { margin-bottom: 1rem; color: var(--text); }
+
+  /* ── TIMELINE ── */
+  .timeline {
+    position: relative;
+    padding-left: 2rem;
+    margin: 1.5rem 0;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 8px;
+    bottom: 8px;
+    width: 1px;
+    background: linear-gradient(to bottom, var(--accent), var(--border));
+  }
+
+  .tl-item {
+    position: relative;
+    margin-bottom: 2rem;
+    animation: fadeUp 0.5s ease both;
+  }
+
+  .tl-item::before {
+    content: '';
+    position: absolute;
+    left: -2.4rem;
+    top: 6px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+  }
+
+  .tl-item.warn::before { background: var(--warn); box-shadow: 0 0 8px var(--warn); }
+  .tl-item.success::before { background: var(--accent2); box-shadow: 0 0 8px var(--accent2); }
+
+  .tl-time {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-bottom: 0.3rem;
+    letter-spacing: 0.05em;
+  }
+
+  .tl-title {
+    font-family: var(--head);
+    font-size: 1rem;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 0.4rem;
+  }
+
+  .tl-body { color: var(--text-dim); font-size: 0.9rem; }
+
+  /* ── CODE / TERMINAL BLOCKS ── */
+  .terminal {
+    background: #060a0d;
+    border: 1px solid var(--border);
+    border-top: 2px solid var(--accent);
+    border-radius: 2px;
+    margin: 1.5rem 0;
+    overflow: hidden;
+  }
+
+  .terminal-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .t-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+  }
+  .t-dot:nth-child(1) { background: #ff5f57; }
+  .t-dot:nth-child(2) { background: #febc2e; }
+  .t-dot:nth-child(3) { background: #28c840; }
+
+  .t-label {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-left: auto;
+    letter-spacing: 0.08em;
+  }
+
+  .terminal pre {
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    line-height: 1.8;
+    padding: 1.2rem 1.5rem;
+    color: #7ec8e3;
+    overflow-x: auto;
+    white-space: pre-wrap;
+  }
+
+  .terminal pre .c-green  { color: var(--accent2); }
+  .terminal pre .c-yellow { color: #ffd166; }
+  .terminal pre .c-red    { color: var(--warn); }
+  .terminal pre .c-dim    { color: var(--muted); }
+  .terminal pre .c-white  { color: #fff; }
+
+  /* ── ALERT PANELS ── */
+  .alert {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem 1.2rem;
+    border-radius: 2px;
+    margin: 1.5rem 0;
+    border: 1px solid;
+  }
+
+  .alert-warn {
+    border-color: rgba(255,107,53,0.4);
+    background: rgba(255,107,53,0.06);
+  }
+
+  .alert-info {
+    border-color: rgba(0,200,255,0.3);
+    background: rgba(0,200,255,0.05);
+  }
+
+  .alert-success {
+    border-color: rgba(0,255,157,0.3);
+    background: rgba(0,255,157,0.05);
+  }
+
+  .alert-icon {
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    padding-top: 0.15rem;
+    white-space: nowrap;
+  }
+  .alert-warn   .alert-icon { color: var(--warn); }
+  .alert-info   .alert-icon { color: var(--accent); }
+  .alert-success .alert-icon { color: var(--accent2); }
+
+  .alert-body { font-size: 0.88rem; color: var(--text-dim); }
+  .alert-body strong { color: var(--text); }
+
+  /* ── SPEC TABLE ── */
+  .spec-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+    margin: 1.2rem 0;
+  }
+
+  .spec-table tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+  .spec-table tr:hover { background: rgba(0,200,255,0.03); }
+
+  .spec-table td {
+    padding: 0.65rem 0.8rem;
+    vertical-align: top;
+  }
+
+  .spec-table td:first-child {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    width: 38%;
+    text-transform: uppercase;
+  }
+
+  .spec-table td:last-child {
+    font-family: var(--head);
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  /* ── SKILLS LEARNED ── */
+  .skills-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+
+  .skill-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 1.1rem 1.2rem;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+
+  .skill-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+
+  .skill-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .skill-card:hover::before { opacity: 1; }
+
+  .skill-icon {
+    font-family: var(--mono);
+    font-size: 1.1rem;
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+  }
+
+  .skill-title {
+    font-family: var(--head);
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #fff;
+    margin-bottom: 0.3rem;
+  }
+
+  .skill-desc {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+
+  /* ── QUOTE ── */
+  .quote-block {
+    border-left: 3px solid var(--accent2);
+    padding: 1rem 1.5rem;
+    margin: 2rem 0;
+    background: rgba(0,255,157,0.04);
+  }
+
+  .quote-block blockquote {
+    font-family: var(--body);
+    font-style: italic;
+    font-size: 1.05rem;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+  }
+
+  .quote-attribution {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+
+  /* ── FIRMWARE LOG ── */
+  .fw-log {
+    background: #060a0d;
+    border: 1px solid var(--border);
+    border-top: 2px solid var(--accent2);
+    padding: 1.2rem 1.5rem;
+    margin: 1.5rem 0;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    line-height: 2;
+    color: #4a8a6a;
+  }
+
+  .fw-log .done { color: var(--accent2); }
+  .fw-log .active { color: #ffd166; }
+  .fw-log .label { color: var(--text-dim); }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 2rem;
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+  }
+
+  footer a { color: var(--accent); text-decoration: none; }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .tl-item:nth-child(1) { animation-delay: 0.05s; }
+  .tl-item:nth-child(2) { animation-delay: 0.1s; }
+  .tl-item:nth-child(3) { animation-delay: 0.15s; }
+  .tl-item:nth-child(4) { animation-delay: 0.2s; }
+  .tl-item:nth-child(5) { animation-delay: 0.25s; }
+  .tl-item:nth-child(6) { animation-delay: 0.3s; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 600px) {
+    header { padding: 0 1rem; }
+    .hero, main { padding-left: 1rem; padding-right: 1rem; }
+    .meta-bar { gap: 1.2rem; }
+    nav a { margin-left: 1rem; font-size: 0.72rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">ARTURS<span>/</span>PORTFOLIO</div>
+  <nav>
+    <a href="#overview">Overview</a>
+    <a href="#timeline">Timeline</a>
+    <a href="#technical">Technical</a>
+    <a href="#outcome">Outcome</a>
+  </nav>
+</header>
+
+<!-- ══════════════════════════════════════════════ HERO -->
+<section class="hero">
+  <div class="tag-row">
+    <span class="tag tag-warn">INCIDENT RECOVERY</span>
+    <span class="tag tag-blue">HARDWARE SECURITY</span>
+    <span class="tag tag-blue">BIOS / FIRMWARE</span>
+    <span class="tag tag-green">RESOLVED</span>
+  </div>
+
+  <h1>BIOS Password Recovery &amp;<br><em>Firmware Reflash</em> — Intel NUC7i5BNH</h1>
+
+  <p class="hero-sub">
+    A documented hardware-level security recovery challenge: receiving a BIOS-locked
+    mini PC, diagnosing the failure mode, executing a multi-stage firmware recovery,
+    and deploying the device as a lab node running Windows Server 2025.
+  </p>
+
+  <div class="meta-bar">
+    <div class="meta-item">
+      <label>Device</label>
+      <value>Intel NUC7i5BNH (NUC7i5BNB board)</value>
+    </div>
+    <div class="meta-item">
+      <label>Incident Date</label>
+      <value>19 January 2026</value>
+    </div>
+    <div class="meta-item">
+      <label>Resolution Date</label>
+      <value>24 January 2026</value>
+    </div>
+    <div class="meta-item">
+      <label>Cost</label>
+      <value>£64.99 (eBay barebone)</value>
+    </div>
+    <div class="meta-item">
+      <label>Final Status</label>
+      <value>Windows Server 2025 — Operational</value>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════ MAIN -->
+<main>
+
+  <!-- §1 OVERVIEW -->
+  <div class="section-header" id="overview">
+    <span class="section-num">// 01</span>
+    <h2>Situation Overview</h2>
+    <div class="section-line"></div>
+  </div>
+
+  <p>
+    A barebone Intel NUC7i5BNH was purchased from an eBay reseller (e-revive.ltd) for £64.99
+    as a second node for a home cybersecurity lab running Active Directory on Windows Server 2025.
+    On first power-on, the device presented a BIOS password prompt — the unit had been returned
+    to stock with security credentials still set by a prior owner.
+  </p>
+
+  <p>
+    Rather than accepting the seller's offer of a full refund, the decision was made to treat
+    this as a practical hardware security challenge, documenting every step as a portfolio artifact.
+  </p>
+
+  <div class="alert alert-warn">
+    <div class="alert-icon">[!] WARN</div>
+    <div class="alert-body">
+      <strong>Pre-boot security controls are a real-world scenario.</strong>
+      Enterprises routinely inherit hardware with unknown BIOS credentials during mergers,
+      device refresh cycles, or asset recovery. Understanding recovery procedures at firmware
+      level is a meaningful IT security skill.
+    </div>
+  </div>
+
+  <!-- Device Spec Table -->
+  <table class="spec-table">
+    <tr><td>Model</td><td>Intel NUC NUC7i5BNH (Board: NUC7i5BNB)</td></tr>
+    <tr><td>CPU</td><td>Intel Core i5-7260U @ 2.20 GHz (Kaby Lake, 7th Gen)</td></tr>
+    <tr><td>RAM</td><td>16 GB DDR4 SO-DIMM (1.2V)</td></tr>
+    <tr><td>BIOS Vendor</td><td>Intel / ASUS (post-2023 NUC acquisition)</td></tr>
+    <tr><td>BIOS Version (post-flash)</td><td>BNKBL357.86A.0093.2023.1030.1032</td></tr>
+    <tr><td>Recovery File</td><td>BN0093.bio (FAT32 USB, root directory)</td></tr>
+    <tr><td>Security Mechanism</td><td>Physical BIOS Security Jumper (3-pin header, yellow cap)</td></tr>
+    <tr><td>TPM</td><td>Intel PTT (fTPM) — cleared during recovery</td></tr>
+    <tr><td>Final OS</td><td>Windows Server 2025</td></tr>
+  </table>
+
+  <!-- §2 TIMELINE -->
+  <div class="section-header" id="timeline">
+    <span class="section-num">// 02</span>
+    <h2>Incident Timeline</h2>
+    <div class="section-line"></div>
+  </div>
+
+  <div class="timeline">
+
+    <div class="tl-item">
+      <div class="tl-time">19 JAN 2026 — 17:43</div>
+      <div class="tl-title">Device Received — BIOS Password Discovered</div>
+      <div class="tl-body">
+        On first power-on the device presented a BIOS password prompt. No POST was visible;
+        the system halted at pre-boot authentication. eBay message sent to seller at 17:51
+        confirming the issue. Seller responded with an ASUS support guide and offered a full return.
+        Return declined — challenge accepted.
+      </div>
+    </div>
+
+    <div class="tl-item warn">
+      <div class="tl-time">19 JAN 2026 — ~18:00</div>
+      <div class="tl-title">Attempt 1: BIOS Security Jumper Removal + CMOS Clear</div>
+      <div class="tl-body">
+        Device opened. BIOS security jumper (yellow 3-pin cap, labelled BIOS_SE on board) removed.
+        CMOS battery disconnected. Power button held for 60 seconds. Device left unplugged for
+        5 minutes. On reassembly and power-on: brief "TROX" display artefact followed by black
+        screen. No BIOS accessible. Jumper removal had cleared some state but BIOS firmware
+        itself was now partially corrupted — the security menu appeared briefly but
+        the system halted.
+      </div>
+    </div>
+
+    <div class="tl-item warn">
+      <div class="tl-time">19 JAN 2026 — ~18:15</div>
+      <div class="tl-title">Attempt 2: Security Jumper Menu — Option 2 Selected</div>
+      <div class="tl-body">
+        With jumper removed, the Aptio V UEFI recovery menu appeared on screen:
+        BIOS User and Supervisor Passwords / Trusted Platform Module / Visual BIOS / Recovery.
+        Option 2 (TPM clear) was selected. Menu disappeared. Screen went black. No BIOS
+        output subsequently. Root cause identified: the menu appears only when no valid
+        .BIO recovery file is detected on USB — selecting options clears individual
+        components but does not reflash firmware.
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-time">19 JAN 2026 — ~18:25</div>
+      <div class="tl-title">Recovery File Prepared — BN0093.bio on FAT32 USB</div>
+      <div class="tl-body">
+        ASUS support page confirmed recovery file for all 7th gen BN-series NUCs:
+        BN0093.bio (BIOS version 0093, released 2023-10-30). USB flash drive formatted
+        FAT32 (full format). Single .bio file placed at root — no folders, no renaming.
+        USB inserted into rear port. Jumper removed. Power connected without pressing
+        power button to trigger auto-recovery mode.
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-time">19 JAN 2026 — ~18:35</div>
+      <div class="tl-title">F7 Flash Confirmed — Firmware Blocks Flashing</div>
+      <div class="tl-body">
+        This time the F7 update tool detected the USB and .bio file. Confirmation prompt
+        appeared: "Are you sure you wish to update the BIOS with BN0093.bio?" — confirmed.
+        Firmware flash log appeared on screen showing sequential block updates, all
+        completing with [done] status. Device restarted automatically — brief blue
+        screen (display handshake during LSPCON/graphics firmware reload), then black,
+        then normal POST.
+      </div>
+    </div>
+
+    <div class="tl-item success">
+      <div class="tl-time">24 JAN 2026 — 01:11</div>
+      <div class="tl-title">Full Resolution — Device Operational</div>
+      <div class="tl-body">
+        BIOS entered successfully (F2). F9 loaded optimised defaults. F10 saved and exited.
+        System booted normally. Windows Server 2025 installed. Seller notified:
+        "All works like a charm." Device now active lab node.
+      </div>
+    </div>
+
+  </div>
+
+  <!-- §3 TECHNICAL DETAIL -->
+  <div class="section-header" id="technical">
+    <span class="section-num">// 03</span>
+    <h2>Technical Analysis</h2>
+    <div class="section-line"></div>
+  </div>
+
+  <p>
+    The NUC7i5BNH uses an <strong>Aptio V UEFI BIOS</strong> (AMI-based), which implements
+    a physical hardware security jumper as a secondary authentication bypass mechanism.
+    This is distinct from software-based password reset methods and operates at the
+    firmware level, independent of any installed OS.
+  </p>
+
+  <p>
+    The jumper operates in two modes. In its <strong>normal position</strong> (pins 1–2),
+    full BIOS security is enforced and the security configuration menu is locked.
+    With the jumper <strong>removed entirely</strong>, the board enters a security override
+    state — the Aptio V security menu becomes accessible, and if a valid .bio recovery
+    file is present on a FAT32 USB drive, automatic firmware reflash is triggered on power-on.
+  </p>
+
+  <div class="alert alert-info">
+    <div class="alert-icon">[i] NOTE</div>
+    <div class="alert-body">
+      <strong>Why the menu appeared instead of silent auto-flash:</strong>
+      The Aptio V BIOS on NUC7 series prioritises USB file detection. If no valid .bio is found,
+      it falls back to presenting the security menu — which only handles component-level clears
+      (passwords, TPM), not a full firmware reflash. This is the source of the "menu loop"
+      experienced during initial recovery attempts.
+    </div>
+  </div>
+
+  <!-- Firmware flash log reproduction -->
+  <div class="terminal">
+    <div class="terminal-bar">
+      <div class="t-dot"></div><div class="t-dot"></div><div class="t-dot"></div>
+      <span class="t-label">BIOS FLASH LOG — BN0093.bio — NUC7i5BNB</span>
+    </div>
+    <pre>
+<span class="c-dim">Flashing image for</span> <span class="c-white">Intel(R) Management Engine firmware</span> <span class="c-green">... [done]</span>
+<span class="c-dim">Flashing image for</span> <span class="c-white">BackUp Recovery Block firmware</span>      <span class="c-green">... [done]</span>
+<span class="c-dim">Flashing image for</span> <span class="c-white">Boot Block firmware</span>                 <span class="c-green">... [done]</span>
+<span class="c-dim">Flashing image for</span> <span class="c-white">Recovery Block firmware</span>             <span class="c-green">... [done]</span>
+<span class="c-dim">Flashing image for</span> <span class="c-white">Main Block firmware</span>                 <span class="c-green">... [done]</span>
+<span class="c-dim">Flashing image for</span> <span class="c-white">Graphic firmware</span>                    <span class="c-green">... [done]</span>
+<span class="c-dim">Flashing image for</span> <span class="c-white">FV Data firmware</span>                    <span class="c-green">... [done]</span>
+<span class="c-dim">Flashing image for</span> <span class="c-white">Intel(R) Management Engine firmware</span> <span class="c-yellow">... \</span>
+    </pre>
+  </div>
+
+  <p>
+    Each block serves a distinct function within the UEFI firmware architecture. The
+    <strong>Boot Block</strong> is the first code executed on power-on — corruption here
+    causes a no-POST black screen. The <strong>Main Block</strong> contains the primary
+    BIOS runtime. The <strong>Recovery Block</strong> is a protected fallback region used
+    when the main block is unreadable. The <strong>Management Engine (ME)</strong> firmware
+    handles Intel AMT, power management, and hardware telemetry — it flashes twice
+    (initial and verification pass), which is standard behaviour.
+  </p>
+
+  <p>
+    The <strong>Graphic firmware</strong> block controls LSPCON (Level Shifter/Protocol
+    Converter) behaviour for HDMI/DisplayPort output. Its reflash explains the brief
+    blue screen and display loss during the post-flash restart — the display pipeline
+    reinitialises with the updated firmware before handing off to the OS.
+  </p>
+
+  <div class="alert alert-warn">
+    <div class="alert-icon">[!] TPM</div>
+    <div class="alert-body">
+      <strong>TPM data loss implication:</strong> Selecting the TPM clear option during the
+      initial recovery attempt permanently wiped the Intel PTT (fTPM) keys. Any drives
+      encrypted with BitLocker using TPM-only protection would have been rendered inaccessible.
+      In this case no encrypted drives were present. This is a critical consideration in
+      enterprise asset recovery scenarios — always verify BitLocker recovery key availability
+      before clearing TPM.
+    </div>
+  </div>
+
+  <!-- USB recovery procedure -->
+  <div class="terminal">
+    <div class="terminal-bar">
+      <div class="t-dot"></div><div class="t-dot"></div><div class="t-dot"></div>
+      <span class="t-label">RECOVERY PROCEDURE — VERIFIED STEPS</span>
+    </div>
+    <pre>
+<span class="c-green">STEP 1</span>  <span class="c-white">Prepare recovery USB</span>
+        Format: FAT32 (full format, not quick)
+        File:   BN0093.bio → root directory only
+        Source: asus.com/supportonly/NUC7i5BNH/HelpDesk_BIOS/
+
+<span class="c-green">STEP 2</span>  <span class="c-white">Hardware preparation</span>
+        Power off + unplug adapter
+        Open bottom cover (4x rubber-footed screws)
+        Remove BIOS security jumper (3-pin header, labelled BIOS_SE)
+        Insert USB into rear port
+
+<span class="c-green">STEP 3</span>  <span class="c-white">Trigger auto-recovery</span>
+        Connect power adapter — DO NOT press power button
+        NUC auto-starts; screen stays black during flash
+        Fan/LED activity confirms process running
+        Wait 3–10 minutes — DO NOT interrupt
+
+<span class="c-green">STEP 4</span>  <span class="c-white">Post-flash</span>
+        Unplug power after auto-shutdown or LED settles
+        Remove USB, replace jumper to pins 1-2 (normal position)
+        Reinstall any removed RAM/NVMe
+        Power on → F2 → F9 (load defaults) → F10 (save/exit)
+
+<span class="c-yellow">NOTE</span>    If menu appears instead of silent flash:
+        USB file not detected — check FAT32 format + file at root
+        Try different USB drive (USB 2.0, ≤16GB preferred)
+        Try different rear USB port
+    </pre>
+  </div>
+
+  <!-- §4 SKILLS / OUTCOME -->
+  <div class="section-header" id="outcome">
+    <span class="section-num">// 04</span>
+    <h2>Skills Demonstrated</h2>
+    <div class="section-line"></div>
+  </div>
+
+  <div class="skills-grid">
+    <div class="skill-card">
+      <div class="skill-icon">[HW]</div>
+      <div class="skill-title">Hardware Security Controls</div>
+      <div class="skill-desc">Physical BIOS security jumper operation, CMOS battery procedure, and pre-boot authentication bypass at hardware level.</div>
+    </div>
+    <div class="skill-card">
+      <div class="skill-icon">[FW]</div>
+      <div class="skill-title">Firmware Architecture</div>
+      <div class="skill-desc">Understanding of Aptio V UEFI block structure: Boot Block, Main Block, Recovery Block, ME firmware, Graphics firmware.</div>
+    </div>
+    <div class="skill-card">
+      <div class="skill-icon">[DX]</div>
+      <div class="skill-title">Systematic Diagnosis</div>
+      <div class="skill-desc">Root cause identification across multiple failure modes — distinguishing between partial clear, firmware corruption, and USB detection failure.</div>
+    </div>
+    <div class="skill-card">
+      <div class="skill-icon">[SC]</div>
+      <div class="skill-title">Security Implications</div>
+      <div class="skill-desc">TPM data loss risk awareness, BitLocker key management considerations, and enterprise asset recovery implications.</div>
+    </div>
+    <div class="skill-card">
+      <div class="skill-icon">[DC]</div>
+      <div class="skill-title">Documentation</div>
+      <div class="skill-desc">Timestamped evidence collection throughout the incident — photos, message logs, firmware screenshots — without prior planning.</div>
+    </div>
+    <div class="skill-card">
+      <div class="skill-icon">[LB]</div>
+      <div class="skill-title">Lab Deployment</div>
+      <div class="skill-desc">Device recovered and deployed as an AD lab node running Windows Server 2025, contributing to an ongoing SOC analyst portfolio build.</div>
+    </div>
+  </div>
+
+  <!-- Closing quote -->
+  <div class="quote-block">
+    <blockquote>
+      "It was not an inconvenience but rather an opportunity to learn and develop skills.
+      Cheers for the opportunity."
+    </blockquote>
+    <div class="quote-attribution">— ARTURS, message to seller · 24 JAN 2026 · 12:58</div>
+  </div>
+
+  <div class="alert alert-success">
+    <div class="alert-icon">[✓] OK</div>
+    <div class="alert-body">
+      <strong>Final state:</strong> NUC7i5BNH fully operational. BIOS version BNKBL357.86A.0093
+      (latest available for this model). Windows Server 2025 installed. Device active as second
+      node in ADForest.local home lab environment alongside Splunk 10.2 SIEM, Sysmon, BloodHound CE,
+      and PingCastle.
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  ARTURS — IT PORTFOLIO &nbsp;|&nbsp; CASE STUDY: NUC-BIOS-RECOVERY-2026-01 &nbsp;|&nbsp;
+  BIOS REF: <a href="https://www.asus.com/uk/support/faq/1052535/" target="_blank">ASUS FAQ 1052535</a>
+</footer>
+
+</body>
+</html>
