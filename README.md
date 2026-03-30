@@ -42,7 +42,7 @@
     └── 12_seller-msg-closing.jpg          ← eBay message — "not an inconvenience but an opportunity"
 ```
 
-**[→ View the full case study (HTML)]([./nuc-bios-recovery-portfolio.html](https://arturskaufmanis.github.io/BIOS-recovery/))**
+**[→ View the full case study (live HTML)](https://arturskaufmanis.github.io/BIOS-recovery/)**
 
 ---
 
